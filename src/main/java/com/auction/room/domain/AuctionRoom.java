@@ -28,11 +28,12 @@ public class AuctionRoom {
     private Long startTimestamp;
     private Long endTimestamp;
 
-    public String toKeyString() {
-        return "auction:room:" + uuid.toString();
+    public String toInfoKeyString() {
+        return "auction:room:" + uuid.toString() + ":info";
     }
     public Map<String, String> toValueMap() {
         Map<String, String> valueMap = new HashMap<>();
+        valueMap.put("itemName", itemName);
         valueMap.put("startPrice", startPrice.toString());
         valueMap.put("endPrice", endPrice.toString());
         valueMap.put("highestBidUserId", highestBidUserId.toString());
