@@ -2,18 +2,18 @@ package com.auction.room.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import lombok.*;
-import org.hibernate.Hibernate;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 @Getter
-@Setter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@RequiredArgsConstructor
 public class AuctionRoom {
     @Id
     private String uuid;
@@ -29,6 +29,10 @@ public class AuctionRoom {
     private Long endTimestamp;
 
     private boolean isActiveRoom = true;
+
+    public void changeRoomStatus(boolean activeRoom) {
+        isActiveRoom = activeRoom;
+    }
 
     public String toInfoKeyString(String uuid) {
         return "auction:room:" + uuid + ":info";
@@ -55,18 +59,5 @@ public class AuctionRoom {
         this.endPrice = endPrice;
         this.startTimestamp = startTimestamp;
         this.endTimestamp = endTimestamp;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        AuctionRoom that = (AuctionRoom) o;
-        return getUuid() != null && Objects.equals(getUuid(), that.getUuid());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
     }
 }
