@@ -4,33 +4,42 @@ import com.auction.room.domain.AuctionRoom;
 import com.auction.room.dto.AddAuctionRoomRequest;
 import com.auction.room.dto.AuctionRoomResponse;
 import com.auction.room.dto.EnterAuctionRoomRequest;
+import com.auction.room.repository.AuctionRoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuctionRoomService {
     private final StringRedisTemplate redisTemplate;
+    private final AuctionRoomRepository auctionRoomRepository;
     private List<Object> multiGet = List.of("itemName", "startPrice", "endPrice", "startTimestamp", "endTimestamp");
 
-
-    // TODO : MySQL 추가?
+    @Transactional
     public ResponseEntity<AuctionRoom> addAuctionRoom(AddAuctionRoomRequest request) {
+        String uuid = UUID.randomUUID().toString();
         AuctionRoom auctionRoom = AuctionRoom.builder()
+                .uuid(uuid)
                 .startPrice(request.startPrice())
+                .endPrice(request.startPrice())
+                .startTimestamp(System.currentTimeMillis())
                 .endTimestamp(request.endTimestamp())
                 .itemName(request.itemName())
                 .build();
 
-        redisTemplate.opsForHash().putAll(auctionRoom.toInfoKeyString(), auctionRoom.toValueMap());
+        auctionRoomRepository.save(auctionRoom);
+
+        redisTemplate.opsForHash().putAll(auctionRoom.toInfoKeyString(uuid), auctionRoom.toValueMap());
         return ResponseEntity.ok().body(auctionRoom);
     }
 
