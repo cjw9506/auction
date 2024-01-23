@@ -40,12 +40,9 @@ public class ChatController {
     public void chat(@DestinationVariable String roomId,
                      MessageDTO message) {
 
+        boolean isHighest = chatService.isHighestPrice(message);
+        message.updateStatus(isHighest);
         template.convertAndSend("/sub/" + message.getRoomId(), message);
-
-        if (chatService.isHighestPrice(message)) {
-            template.convertAndSend("/sub/" + message.getRoomId(), message);
-        }
-
     }
 
 
