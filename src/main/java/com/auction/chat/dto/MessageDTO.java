@@ -9,7 +9,7 @@ public class MessageDTO {
 
     private String roomId;
     private Long sender;
-    private Double content;
+    private Double price;
     private boolean isHighest;
 
     public void updateStatus(boolean highest) {

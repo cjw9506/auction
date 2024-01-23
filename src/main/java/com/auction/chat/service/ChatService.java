@@ -1,6 +1,8 @@
 package com.auction.chat.service;
 
+import com.auction.chat.domain.ChatMessage;
 import com.auction.chat.dto.MessageDTO;
+import com.auction.chat.repository.ChatRepository;
 import com.auction.room.domain.AuctionRoom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -15,6 +17,7 @@ import java.util.Optional;
 public class ChatService {
 
     private final StringRedisTemplate redisTemplate;
+    private final ChatRepository chatRepository;
 
     @Transactional
     public boolean isHighestPrice(MessageDTO message) {
@@ -23,20 +26,9 @@ public class ChatService {
 
         Double currentEndPrice = getDouble(entries, "endPrice");
         Double startPrice = getDouble(entries, "startPrice");
-        Long startTimestamp = getLong(entries, "startTimestamp");
-        Long endTimestamp = getLong(entries, "endTimestamp");
 
-        if (currentEndPrice < message.getContent()) {
-            AuctionRoom auctionRoom = AuctionRoom.builder()
-                    .uuid(message.getRoomId())
-                    .itemName((String) entries.get("itemName"))
-                    .highestBidUserId(message.getSender())
-                    .startPrice(startPrice)
-                    .endPrice(message.getContent())
-                    .startTimestamp(startTimestamp)
-                    .endTimestamp(endTimestamp)
-                    .build();
-
+        if (currentEndPrice < message.getPrice()) {
+            AuctionRoom auctionRoom = buildAuctionRoom(message, entries, startPrice);
             redisTemplate.opsForHash().putAll(auctionRoom.toInfoKeyString(message.getRoomId()), auctionRoom.toValueMap());
 
             return true;
@@ -46,6 +38,19 @@ public class ChatService {
 
     }
 
+
+
+    private AuctionRoom buildAuctionRoom(MessageDTO message, Map<Object, Object> entries, Double startPrice) {
+        return AuctionRoom.builder()
+                .uuid(message.getRoomId())
+                .itemName((String) entries.get("itemName"))
+                .highestBidUserId(message.getSender())
+                .startPrice(startPrice)
+                .endPrice(message.getPrice())
+                .startTimestamp(getLong(entries, "startTimestamp"))
+                .endTimestamp(getLong(entries, "endTimestamp"))
+                .build();
+    }
     private Double getDouble(Map<Object, Object> map, String key) {
         return Optional.ofNullable((String) map.get(key))
                 .map(Double::valueOf)
