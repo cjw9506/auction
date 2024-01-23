@@ -38,7 +38,16 @@ public class ChatService {
 
     }
 
+    @Transactional
+    public void save(MessageDTO message) {
+        //TODO AuctionRoom entity 추가
+        ChatMessage chatMessage = ChatMessage.builder()
+                .price(message.getPrice())
+                .sender(message.getSender())
+                .build();
 
+        chatRepository.save(chatMessage);
+    }
 
     private AuctionRoom buildAuctionRoom(MessageDTO message, Map<Object, Object> entries, Double startPrice) {
         return AuctionRoom.builder()

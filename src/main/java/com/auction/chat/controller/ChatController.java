@@ -43,6 +43,8 @@ public class ChatController {
         boolean isHighest = chatService.isHighestPrice(message);
         message.updateStatus(isHighest);
         template.convertAndSend("/sub/" + message.getRoomId(), message);
+        if (isHighest) chatService.save(message);
+
     }
 
 
