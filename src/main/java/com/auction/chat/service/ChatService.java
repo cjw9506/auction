@@ -1,5 +1,7 @@
 package com.auction.chat.service;
 
+import com.auction.auth.domain.User;
+import com.auction.auth.repository.UserRepository;
 import com.auction.chat.domain.ChatMessage;
 import com.auction.chat.dto.MessageDTO;
 import com.auction.chat.repository.ChatRepository;
@@ -18,6 +20,7 @@ public class ChatService {
 
     private final StringRedisTemplate redisTemplate;
     private final ChatRepository chatRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public boolean isHighestPrice(MessageDTO message) {
@@ -27,8 +30,13 @@ public class ChatService {
         Double currentEndPrice = getDouble(entries, "endPrice");
         Double startPrice = getDouble(entries, "startPrice");
 
+        Optional<User> userOpt = userRepository.findById(message.getSender());
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+
         if (currentEndPrice < message.getPrice()) {
-            AuctionRoom auctionRoom = buildAuctionRoom(message, entries, startPrice);
+            AuctionRoom auctionRoom = buildAuctionRoom(message, entries, startPrice, userOpt.get());
             redisTemplate.opsForHash().putAll(auctionRoom.toInfoKeyString(message.getRoomId()), auctionRoom.toValueMap());
 
             return true;
@@ -49,11 +57,11 @@ public class ChatService {
         chatRepository.save(chatMessage);
     }
 
-    private AuctionRoom buildAuctionRoom(MessageDTO message, Map<Object, Object> entries, Double startPrice) {
+    private AuctionRoom buildAuctionRoom(MessageDTO message, Map<Object, Object> entries, Double startPrice, User user) {
         return AuctionRoom.builder()
                 .uuid(message.getRoomId())
                 .itemName((String) entries.get("itemName"))
-                .highestBidUserId(message.getSender())
+                .highestBidUser(user)
                 .startPrice(startPrice)
                 .endPrice(message.getPrice())
                 .startTimestamp(getLong(entries, "startTimestamp"))

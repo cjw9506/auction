@@ -1,7 +1,9 @@
 package com.auction.room.domain;
 
+import com.auction.auth.domain.User;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,9 +21,10 @@ public class AuctionRoom {
     private String uuid;
     private String itemName;
 
-    // TODO : 유저 엔티티가 만들어 진다면, 변경해야함,
-    private Long ownerId;
-    private Long highestBidUserId;
+    @ManyToOne
+    private User owner;
+    @ManyToOne
+    private User highestBidUser;
 
     private Double startPrice;
     private Double endPrice;
@@ -42,19 +45,20 @@ public class AuctionRoom {
         valueMap.put("itemName", itemName);
         valueMap.put("startPrice", startPrice.toString());
         valueMap.put("endPrice", endPrice.toString());
-        valueMap.put("highestBidUserId", Objects.nonNull(highestBidUserId) ? highestBidUserId.toString() : null);
+        valueMap.put("highestBidUserId", Objects.nonNull(highestBidUser) ? highestBidUser.getId().toString() : null);
         valueMap.put("startTimestamp", startTimestamp.toString());
         valueMap.put("endTimestamp", endTimestamp.toString());
         return valueMap;
     }
 
     @Builder
-    public AuctionRoom(String uuid, String itemName, Long highestBidUserId,
+    public AuctionRoom(String uuid, String itemName, User owner, User highestBidUser,
                        Double startPrice, Double endPrice, Long startTimestamp,
                        Long endTimestamp) {
         this.uuid = uuid;
         this.itemName = itemName;
-        this.highestBidUserId = highestBidUserId;
+        this.owner = owner;
+        this.highestBidUser = highestBidUser;
         this.startPrice = startPrice;
         this.endPrice = endPrice;
         this.startTimestamp = startTimestamp;

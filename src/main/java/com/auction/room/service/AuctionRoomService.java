@@ -1,5 +1,7 @@
 package com.auction.room.service;
 
+import com.auction.auth.domain.User;
+import com.auction.auth.repository.UserRepository;
 import com.auction.room.domain.AuctionRoom;
 import com.auction.room.dto.AddAuctionRoomRequest;
 import com.auction.room.dto.AuctionRoomResponse;
@@ -13,24 +15,29 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class AuctionRoomService {
     private final StringRedisTemplate redisTemplate;
     private final AuctionRoomRepository auctionRoomRepository;
+    private final UserRepository userRepository;
     private List<Object> multiGet = List.of("itemName", "startPrice", "endPrice", "startTimestamp", "endTimestamp");
 
     @Transactional
     public ResponseEntity<AuctionRoom> addAuctionRoom(AddAuctionRoomRequest request) {
+        // 경매방 등록자
+        Optional<User> ownerOpt = userRepository.findById(request.userId());
+        if (ownerOpt.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         String uuid = UUID.randomUUID().toString();
         AuctionRoom auctionRoom = AuctionRoom.builder()
                 .uuid(uuid)
                 .startPrice(request.startPrice())
+                .owner(ownerOpt.get())
                 .endPrice(request.startPrice())
                 .startTimestamp(System.currentTimeMillis())
                 .endTimestamp(request.endTimestamp())
@@ -44,8 +51,14 @@ public class AuctionRoomService {
     }
 
 
-    // TODO : 지금은 유저 id 리스트로 반환, 후에 유저엔티티 만들어 진다면 수정
+    // TODO : 유저 id 리스트로 반환?
     public Set<String> enterAuctionRoom(EnterAuctionRoomRequest request, String roomId) {
+        // 선착순 처리 설정 50명
+        Long size = redisTemplate.opsForSet().size("auction:room:" + roomId);
+        if (Objects.nonNull(size) && size < 50) {
+            return Collections.emptySet();
+        }
+
         redisTemplate.opsForSet()
                 .add("auction:room:" + roomId, request.userId().toString());
 
