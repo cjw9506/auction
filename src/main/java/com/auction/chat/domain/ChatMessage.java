@@ -16,16 +16,16 @@ public class ChatMessage {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long sender;
+    private String sender;
 
-    private Double price;
+    private String content;
 
     //TODO chatRoom 연겷하기
 
     @Builder
-    public ChatMessage(Long sender, Double price) {
+    public ChatMessage(String sender, String content) {
         this.sender = sender;
-        this.price = price;
+        this.content = content;
         //TODO ChatRoom 연결하기
     }
 }
