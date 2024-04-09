@@ -34,13 +34,14 @@ public class AuctionRoomService {
         }
 
         String uuid = UUID.randomUUID().toString();
+        long currentTime = System.currentTimeMillis();
         AuctionRoom auctionRoom = AuctionRoom.builder()
                 .uuid(uuid)
                 .startPrice(request.startPrice())
                 .owner(ownerOpt.get())
                 .endPrice(request.startPrice())
-                .startTimestamp(System.currentTimeMillis())
-                .endTimestamp(request.endTimestamp())
+                .startTimestamp(currentTime)
+                .endTimestamp(currentTime + (3600 * 1000))
                 .itemName(request.itemName())
                 .build();
 
@@ -95,5 +96,12 @@ public class AuctionRoomService {
         }
 
         return result;
+    }
+
+    @Transactional
+    public void changeHighestUser(String roomId, String userId) {
+        AuctionRoom auctionRoom = auctionRoomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("방 없음"));
+        User user = userRepository.findByAccount(userId).orElseThrow(() -> new IllegalArgumentException("계정 없음"));
+        auctionRoom.changeHighestBidUser(user);
     }
 }

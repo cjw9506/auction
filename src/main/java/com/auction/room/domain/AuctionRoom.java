@@ -64,4 +64,7 @@ public class AuctionRoom {
         this.startTimestamp = startTimestamp;
         this.endTimestamp = endTimestamp;
     }
+    public void changeHighestBidUser(User highestBidUser) {
+        this.highestBidUser = highestBidUser;
+    }
 }
