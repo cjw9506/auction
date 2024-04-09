@@ -26,6 +26,7 @@ public class SecurityConfig {
         return http
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/**").permitAll()
                         .requestMatchers(POST, "/api/signup").permitAll()
                         .requestMatchers(POST, "/api/signin").permitAll()
                         .anyRequest().authenticated()
