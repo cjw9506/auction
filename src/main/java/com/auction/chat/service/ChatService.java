@@ -57,7 +57,7 @@ public class ChatService {
             return false;
         }
 
-        if (currentEndPrice < Double.parseDouble(message.getContent())) {
+        if (currentEndPrice < message.getContent()) {
             AuctionRoom auctionRoom = buildAuctionRoom(message, entries, startPrice, userOpt.get());
             redisTemplate.opsForHash().putAll(auctionRoom.toInfoKeyString(message.getRoomId()), auctionRoom.toValueMap());
             Map<Object, Object> changeEntries = redisTemplate.opsForHash().entries(key);
@@ -88,7 +88,7 @@ public class ChatService {
                 .itemName((String) entries.get("itemName"))
                 .highestBidUser(user)
                 .startPrice(startPrice)
-                .endPrice(Double.parseDouble(message.getContent()))
+                .endPrice(message.getContent())
                 .startTimestamp(getLong(entries, "startTimestamp"))
                 .endTimestamp(getLong(entries, "endTimestamp"))
                 .build();

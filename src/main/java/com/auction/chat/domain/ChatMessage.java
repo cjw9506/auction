@@ -18,12 +18,12 @@ public class ChatMessage {
 
     private String sender;
 
-    private String content;
+    private Double content;
 
     //TODO chatRoom 연겷하기
 
     @Builder
-    public ChatMessage(String sender, String content) {
+    public ChatMessage(String sender, Double content) {
         this.sender = sender;
         this.content = content;
         //TODO ChatRoom 연결하기
