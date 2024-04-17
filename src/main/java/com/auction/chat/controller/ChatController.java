@@ -11,6 +11,9 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 @RestController
@@ -20,7 +23,7 @@ public class ChatController {
     private final SimpMessagingTemplate template;
     private final ChatService chatService;
     private final AuctionRoomService auctionRoomService;
-
+    static ExecutorService executor = Executors.newFixedThreadPool(10); // 작업을 처리할 스레드 풀 생성
 
 
 
@@ -46,15 +49,21 @@ public class ChatController {
             @Payload MessageDTO message,
             @DestinationVariable String roomId) {
 
-        boolean isHighest = chatService.isHighestPrice(message);
-        message.updateStatus(isHighest);
+        CompletableFuture<Boolean> isHighestFuture = CompletableFuture.supplyAsync(() -> chatService.isHighestPrice(message), executor);
+        isHighestFuture.thenAccept(isHighest -> {
+            message.updateStatus(isHighest);
 
-        if (isHighest) {
-            template.convertAndSend("/sub/public/" + message.getRoomId(), message);
-            chatService.save(message);
-            auctionRoomService.changeHighestUser(roomId, message.getSender());
-        }
+            if (isHighest) {
+                executor.submit(() -> {
+                    template.convertAndSend("/sub/public/" + message.getRoomId(), message);
+                });
+                executor.submit(() -> {
+                    chatService.save(message);
+                });
+                executor.submit(() -> {
+                    auctionRoomService.changeHighestUser(roomId, message.getSender());
+                });
+            }
+        });
     }
-
-
 }
