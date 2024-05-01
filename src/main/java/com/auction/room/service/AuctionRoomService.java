@@ -32,45 +32,64 @@ public class AuctionRoomService {
         if (ownerOpt.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
+        User user = ownerOpt.get();
 
         String uuid = UUID.randomUUID().toString();
         AuctionRoom auctionRoom = AuctionRoom.builder()
                 .uuid(uuid)
                 .startPrice(request.startPrice())
-                .owner(ownerOpt.get())
+                .owner(user)
                 .endPrice(request.startPrice())
                 .startTimestamp(System.currentTimeMillis())
                 .endTimestamp(request.endTimestamp())
                 .itemName(request.itemName())
                 .build();
+        
+        // AuctionRoom 의 유저리스트에 추가
+        addAuctionRoom(uuid, user.getId());
 
         auctionRoomRepository.save(auctionRoom);
-
         redisTemplate.opsForHash().putAll(auctionRoom.toInfoKeyString(uuid), auctionRoom.toValueMap());
         return ResponseEntity.ok().body(auctionRoom);
     }
 
 
-    // TODO : 유저 id 리스트로 반환?
     public Set<String> enterAuctionRoom(EnterAuctionRoomRequest request, String roomId) {
-        // 선착순 처리 설정 50명
-        Long size = redisTemplate.opsForSet().size("auction:room:" + roomId);
-        if (Objects.nonNull(size) && size < 50) {
-            return Collections.emptySet();
-        }
-
-        redisTemplate.opsForSet()
-                .add("auction:room:" + roomId, request.userId().toString());
+        isExistAuctionRoom("auction:room:" + roomId);
+        addAuctionRoom(roomId, request.userId());
 
         return redisTemplate.opsForSet()
                 .members("auction:room:" + roomId);
     }
 
     /**
+     * 방이 존재 하는지
+     */
+    private void isExistAuctionRoom(String key) {
+        Long size = redisTemplate.opsForSet().size(key);
+
+        // 선착순 처리 설정 50명
+        // TODO : 방이 꽉찼을 때 예외처리, RuntimeException 이 아닌 예외를 만들거나 공통 처리를 해야함
+        if (Objects.nonNull(size) && size < 50) {
+            throw new RuntimeException();
+        }
+    }
+
+    /**
+     * AuctionRoom 유저 목록에 추가
+     * @param roomId
+     * @param userId
+     */
+    private void addAuctionRoom(String roomId, Long userId) {
+        redisTemplate.opsForSet()
+                .add("auction:room:" + roomId, userId.toString());
+    }
+
+    /**
      * 방 목록 반환
      * 방 id, 아이템 이름, 시작가, 시작/ 마감 시간, 인원
      */
-    public List<AuctionRoomResponse> findAuctionRoom() {
+    public ResponseEntity<List<AuctionRoomResponse>> findAuctionRoom() {
         List<AuctionRoomResponse> result = new ArrayList<>();
 
         try (
@@ -94,6 +113,6 @@ public class AuctionRoomService {
             }
         }
 
-        return result;
+        return ResponseEntity.ok().body(result);
     }
 }
