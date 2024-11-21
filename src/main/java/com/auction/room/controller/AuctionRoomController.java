@@ -2,13 +2,13 @@ package com.auction.room.controller;
 
 import com.auction.room.domain.AuctionRoom;
 import com.auction.room.dto.AddAuctionRoomRequest;
+import com.auction.room.dto.AuctionRoomResponse;
 import com.auction.room.service.AuctionRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auction")
@@ -23,5 +23,13 @@ public class AuctionRoomController {
     @PostMapping
     public ResponseEntity<AuctionRoom> addAuctionRoom(@RequestBody AddAuctionRoomRequest request) {
         return auctionRoomService.addAuctionRoom(request);
+    }
+
+    /**
+     * 방 목록 리스트
+     */
+    @GetMapping
+    public ResponseEntity<List<AuctionRoomResponse>> findAuctionRoomList() {
+        return auctionRoomService.findAuctionRoom();
     }
 }
